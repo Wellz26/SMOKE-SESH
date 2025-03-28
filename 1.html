@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cyber Chat</title>
+  <style>
+    /* Basic reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      overflow: hidden; /* Hide scrollbars if content overflows */
+      padding-bottom: 50px;
+    }
+    /* Matrix Background */
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+    }
+    /* Main container for chat */
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid #0f0;
+      border-radius: 5px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      animation: glitch 2s infinite;
+    }
+    @keyframes glitch {
+      0% { text-shadow: 2px 2px #0f0, -2px -2px #ff00ff; }
+      20% { text-shadow: -2px -2px #0f0, 2px 2px #ff00ff; }
+      40% { text-shadow: 2px -2px #0f0, -2px 2px #ff00ff; }
+      60% { text-shadow: -2px 2px #0f0, 2px -2px #ff00ff; }
+      80% { text-shadow: 2px 2px #0f0, -2px -2px #ff00ff; }
+      100% { text-shadow: -2px -2px #0f0, 2px 2px #ff00ff; }
+    }
+    .chat-container {
+      height: 300px;
+      overflow-y: scroll;
+      border: 1px solid #0f0;
+      padding: 10px;
+      margin-bottom: 20px;
+      background: rgba(0, 0, 0, 0.6);
+      text-align: left;
+    }
+    .message {
+      margin-bottom: 10px;
+      word-wrap: break-word;
+    }
+    .input-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .input-container input {
+      flex: 1;
+      max-width: 300px;
+      padding: 10px;
+      border: 2px solid #0f0;
+      border-right: none;
+      border-radius: 5px 0 0 5px;
+      background: #000;
+      color: #0f0;
+    }
+    .input-container button {
+      padding: 10px 20px;
+      border: 2px solid #0f0;
+      border-left: none;
+      background: #0f0;
+      color: #000;
+      cursor: pointer;
+      border-radius: 0 5px 5px 0;
+      transition: transform 0.3s;
+    }
+    .input-container button:hover {
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- Matrix background canvas -->
+  <canvas id="matrixCanvas"></canvas>
+
+  <div class="container">
+    <h1>SMOKE</h1>
+    <!-- Chat display -->
+    <div id="chat" class="chat-container"></div>
+    <!-- Message input -->
+    <div class="input-container">
+      <input type="text" id="messageInput" placeholder="Type your message..." />
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
+
+  <!-- Firebase v9+ Modules and Chat Logic -->
+  <script type="module">
+    /*************************************************
+     * MATRIX BACKGROUND
+     *************************************************/
+    const canvas = document.getElementById('matrixCanvas');
+    const ctx = canvas.getContext('2d');
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const letters = "01CyberSec!@#$%^&*()";
+    const fontSize = 16;
+    let columns = canvas.width / fontSize;
+    let drops = Array.from({ length: columns }, () => canvas.height);
+
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#0f0";
+      ctx.font = fontSize + "px Courier New";
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = letters.charAt(Math.floor(Math.random() * letters.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+    setInterval(drawMatrix, 50);
+
+    /*************************************************
+     * FIREBASE CONFIG & IMPORTS
+     *************************************************/
+    // Import the functions you need from the SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-analytics.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      onChildAdded,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-database.js";
+
+    // Your web app's Firebase configuration (replace with your actual config)
+    const firebaseConfig = {
+      apiKey: "AIzaSyApnWS7y287XbsQ_bhu-oKdZZ7qqqdDp4Q",
+      authDomain: "cyber-chat-1daa5.firebaseapp.com",
+      databaseURL: "https://cyber-chat-1daa5-default-rtdb.firebaseio.com",
+      projectId: "cyber-chat-1daa5",
+      storageBucket: "cyber-chat-1daa5.firebasestorage.app",
+      messagingSenderId: "313933563978",
+      appId: "1:313933563978:web:ca73792a275d2b97667eb3",
+      measurementId: "G-565CCJQJNN"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app); // Optional
+    const database = getDatabase(app);
+
+    /*************************************************
+     * CHAT FUNCTIONALITY
+     *************************************************/
+    const chatElement = document.getElementById('chat');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Send message to Firebase
+    sendBtn.addEventListener('click', () => {
+      const text = messageInput.value.trim();
+      if (text) {
+        // Push a new message to 'messages' node
+        push(ref(database, 'messages'), {
+          text: text,
+          timestamp: serverTimestamp()
+        });
+        messageInput.value = "";
+      }
+    });
+
+    // Listen for new messages
+    onChildAdded(ref(database, 'messages'), (snapshot) => {
+      const data = snapshot.val();
+      displayMessage(data.text);
+    });
+
+    function displayMessage(text) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message');
+      messageDiv.textContent = text;
+      chatElement.appendChild(messageDiv);
+      // Auto-scroll to the bottom
+      chatElement.scrollTop = chatElement.scrollHeight;
+    }
+  </script>
+</body>
+</html>
+</html>
